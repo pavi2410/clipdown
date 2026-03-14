@@ -1,34 +1,115 @@
-import { useState } from 'react';
-import reactLogo from '@/assets/react.svg';
-import wxtLogo from '/wxt.svg';
+import { useState, useEffect, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { settingsItem, DEFAULT_SETTINGS, type Settings, type ClipScope } from '../../utils/storage';
 import './App.css';
 
+type PreviewTab = 'raw' | 'rendered';
+
+const SCOPES: { value: ClipScope; label: string }[] = [
+  { value: 'smart', label: 'Smart' },
+  { value: 'article', label: 'Article' },
+  { value: 'full', label: 'Full Page' },
+  { value: 'selection', label: 'Selection' },
+];
+
 function App() {
-  const [count, setCount] = useState(0);
+  const [scope, setScope] = useState<ClipScope>('smart');
+  const [markdown, setMarkdown] = useState('');
+  const [title, setTitle] = useState('');
+  const [previewTab, setPreviewTab] = useState<PreviewTab>('rendered');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copyDone, setCopyDone] = useState(false);
+
+  // Load default scope from settings on mount
+  useEffect(() => {
+    settingsItem.getValue().then((s: Settings) => setScope(s.defaultScope ?? DEFAULT_SETTINGS.defaultScope));
+  }, []);
+
+  const doClip = useCallback(async (s: ClipScope) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (!tab?.id) throw new Error('No active tab found');
+      const result = await browser.tabs.sendMessage(tab.id, { type: 'clip', scope: s }) as { markdown: string; title: string } | undefined;
+      if (!result) throw new Error('No response from content script');
+      setMarkdown(result.markdown);
+      setTitle(result.title);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { doClip(scope); }, [scope]);
+
+  async function copyToClipboard() {
+    await navigator.clipboard.writeText(markdown);
+    setCopyDone(true);
+    setTimeout(() => setCopyDone(false), 1500);
+  }
+
+  async function downloadFile() {
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const safe = title.replace(/[^a-zA-Z0-9_\- ]/g, '').trim() || 'clip';
+    await browser.downloads.download({ url, filename: `${safe}.md`, saveAs: false });
+    URL.revokeObjectURL(url);
+  }
+
+  function openOptions() {
+    browser.runtime.openOptionsPage();
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://wxt.dev" target="_blank">
-          <img src={wxtLogo} className="logo" alt="WXT logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="app">
+      <header className="header">
+        <span className="logo-text">📋 Clipdown</span>
+        <button className="settings-btn" onClick={openOptions} title="Settings">⚙️</button>
+      </header>
+
+      <div className="scope-bar">
+        {SCOPES.map((s) => (
+          <button
+            key={s.value}
+            className={`scope-btn${scope === s.value ? ' active' : ''}`}
+            onClick={() => setScope(s.value)}
+            disabled={loading}
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
-      <h1>WXT + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+
+      <div className="preview-tabs">
+        <button className={`tab-btn${previewTab === 'rendered' ? ' active' : ''}`} onClick={() => setPreviewTab('rendered')}>Rendered</button>
+        <button className={`tab-btn${previewTab === 'raw' ? ' active' : ''}`} onClick={() => setPreviewTab('raw')}>Raw</button>
+      </div>
+
+      <div className="preview-area">
+        {loading && <div className="state-msg">Clipping…</div>}
+        {error && <div className="state-msg error">{error}</div>}
+        {!loading && !error && previewTab === 'raw' && (
+          <textarea className="raw-preview" readOnly value={markdown} />
+        )}
+        {!loading && !error && previewTab === 'rendered' && (
+          <div className="rendered-preview">
+            <ReactMarkdown>{markdown}</ReactMarkdown>
+          </div>
+        )}
+      </div>
+
+      <div className="action-bar">
+        <button className="action-btn primary" onClick={copyToClipboard} disabled={!markdown || loading}>
+          {copyDone ? '✓ Copied!' : 'Copy'}
         </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <button className="action-btn" onClick={downloadFile} disabled={!markdown || loading}>
+          Download .md
+        </button>
       </div>
-      <p className="read-the-docs">
-        Click on the WXT and React logos to learn more
-      </p>
-    </>
+    </div>
   );
 }
 
