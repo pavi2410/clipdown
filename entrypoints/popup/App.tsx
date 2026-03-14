@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Tabs, Toggle, ToggleGroup } from '@base-ui/react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope, type ClipSource } from '../../utils/storage';
-import './App.css';
+import './style.css';
 
 type PreviewTab = 'raw' | 'rendered';
 
@@ -16,7 +18,7 @@ function parseFrontMatter(md: string): { fields: Record<string, string>; body: s
   if (!md.startsWith('---')) return null;
   const end = md.indexOf('\n---', 3);
   if (end === -1) return null;
-  const block = md.slice(4, end); // content between the fences
+  const block = md.slice(4, end);
   const body = md.slice(end + 4).replace(/^\n/, '');
   const fields: Record<string, string> = {};
   for (const line of block.split('\n')) {
@@ -29,23 +31,15 @@ function parseFrontMatter(md: string): { fields: Record<string, string>; body: s
   return { fields, body };
 }
 
-const FIELD_ICONS: Record<string, string> = {
-  title: '📄',
-  url: '🔗',
-  date: '📅',
-  description: '💬',
-  author: '✍️',
-};
-
 function FrontMatterCard({ fields }: { fields: Record<string, string> }) {
   return (
-    <div className="fm-card">
+    <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 mb-4 flex flex-col gap-1.5 text-xs">
       {Object.entries(fields).map(([key, value]) => (
-        <div key={key} className="fm-row">
-          <span className="fm-key">{FIELD_ICONS[key] ?? '•'} {key}</span>
+        <div key={key} className="flex gap-3 min-w-0">
+          <span className="text-neutral-400 font-mono uppercase tracking-wider text-[10px] min-w-18 shrink-0 pt-px">{key}</span>
           {key === 'url'
-            ? <a className="fm-value fm-link" href={value} target="_blank" rel="noreferrer">{value}</a>
-            : <span className="fm-value">{value}</span>
+            ? <a className="text-neutral-600 underline decoration-neutral-300 hover:text-neutral-900 overflow-hidden text-ellipsis whitespace-nowrap block min-w-0" href={value} target="_blank" rel="noreferrer">{value}</a>
+            : <span className="text-neutral-800 wrap-break-word min-w-0">{value}</span>
           }
         </div>
       ))}
@@ -64,7 +58,6 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [copyDone, setCopyDone] = useState(false);
 
-  // Load default scope from settings on mount
   useEffect(() => {
     settingsItem.getValue().then((stored: Settings) => {
       const settings = normalizeSettings(stored);
@@ -121,70 +114,147 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <header className="header">
-        <span className="logo-text">📋 Clipdown</span>
-        <button className="settings-btn" onClick={openOptions} title="Settings">⚙️</button>
+    <div className="flex flex-col w-115 h-140 overflow-hidden bg-white text-neutral-900">
+
+      {/* Header */}
+      <header className="flex items-center justify-between px-3.5 h-11 border-b border-neutral-200 shrink-0">
+        <span className="flex items-center gap-1.5 font-semibold text-[13.5px] tracking-tight select-none">
+          <svg className="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="5" y="1.5" width="6" height="2.5" rx="1"/>
+            <path d="M4 2.5H3a1.5 1.5 0 0 0-1.5 1.5v9A1.5 1.5 0 0 0 3 14.5h10a1.5 1.5 0 0 0 1.5-1.5V4A1.5 1.5 0 0 0 13 2.5h-1"/>
+          </svg>
+          Clipdown
+        </span>
+        <button
+          onClick={openOptions}
+          title="Settings"
+          className="flex items-center justify-center w-7 h-7 rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer border-none bg-transparent"
+        >
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+            <circle cx="7.5" cy="7.5" r="2"/>
+            <path d="M7.5 1.5V3M7.5 12V13.5M1.5 7.5H3M12 7.5h1.5M3.2 3.2l1.05 1.05M10.75 10.75l1.05 1.05M3.2 11.8l1.05-1.05M10.75 4.25l1.05-1.05"/>
+          </svg>
+        </button>
       </header>
 
-      <div className="scope-bar">
+      {/* Scope selector */}
+      <ToggleGroup
+        value={[scope]}
+        onValueChange={(groupValue) => {
+          const nextScope = groupValue[0] as ClipScope | undefined;
+          if (nextScope) setScope(nextScope);
+        }}
+        disabled={loading}
+        className="flex gap-1 px-3 py-2 border-b border-neutral-200 bg-neutral-50 shrink-0"
+      >
         {SCOPES.map((s) => (
-          <button
+          <Toggle
             key={s.value}
-            className={`scope-btn${scope === s.value ? ' active' : ''}`}
-            onClick={() => setScope(s.value)}
+            value={s.value}
             disabled={loading}
+            className="flex-1 py-1.5 px-1 text-xs font-medium rounded-md border border-transparent text-neutral-500 cursor-pointer bg-transparent transition-colors
+              hover:bg-neutral-100 hover:text-neutral-800 hover:border-neutral-200
+              data-pressed:bg-neutral-900 data-pressed:text-white data-pressed:border-neutral-900 data-pressed:font-semibold
+              disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {s.label}
-          </button>
+          </Toggle>
         ))}
-      </div>
+      </ToggleGroup>
 
+      {/* Source banner */}
       {!loading && !error && markdown && (
-        <div className="source-banner">
-          <span className={`source-pill ${source === 'site-markdown' ? 'site' : 'generated'}`}>
-            {source === 'site-markdown' ? 'Site Markdown' : 'Generated Markdown'}
+        <div className="flex items-center justify-between gap-2 px-3.5 py-1.5 border-b border-neutral-200 bg-neutral-50 shrink-0">
+          <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10.5px] font-mono font-medium
+            ${source === 'site-markdown'
+              ? 'bg-green-50 text-green-800 border-green-200'
+              : 'bg-neutral-100 text-neutral-500 border-neutral-200'}`}>
+            {source === 'site-markdown' ? 'site-markdown' : 'generated'}
           </span>
           {source === 'site-markdown' && sourceUrl && (
-            <a className="source-link" href={sourceUrl} target="_blank" rel="noreferrer">
-              Source
+            <a className="text-[11px] text-neutral-400 hover:text-neutral-700 no-underline hover:underline" href={sourceUrl} target="_blank" rel="noreferrer">
+              Source ↗
             </a>
           )}
         </div>
       )}
 
-      <div className="preview-tabs">
-        <button className={`tab-btn${previewTab === 'rendered' ? ' active' : ''}`} onClick={() => setPreviewTab('rendered')}>Rendered</button>
-        <button className={`tab-btn${previewTab === 'raw' ? ' active' : ''}`} onClick={() => setPreviewTab('raw')}>Raw</button>
-      </div>
+      {/* Preview tabs */}
+      <Tabs.Root
+        value={previewTab}
+        onValueChange={(value) => setPreviewTab(value as PreviewTab)}
+        className="flex flex-col flex-1 min-h-0 overflow-hidden"
+      >
+        <Tabs.List className="flex border-b border-neutral-200 px-3.5 bg-neutral-50 shrink-0">
+          <Tabs.Tab
+            value="rendered"
+            className="py-2 px-2.5 text-xs font-medium border-b-[1.5px] border-transparent -mb-px text-neutral-400 cursor-pointer bg-transparent border-none transition-colors
+              hover:text-neutral-600 data-active:text-neutral-900 data-active:border-neutral-900"
+          >
+            Rendered
+          </Tabs.Tab>
+          <Tabs.Tab
+            value="raw"
+            className="py-2 px-2.5 text-xs font-medium border-b-[1.5px] border-transparent -mb-px text-neutral-400 cursor-pointer bg-transparent border-none transition-colors
+              hover:text-neutral-600 data-active:text-neutral-900 data-active:border-neutral-900"
+          >
+            Raw
+          </Tabs.Tab>
+        </Tabs.List>
 
-      <div className="preview-area">
-        {loading && <div className="state-msg">Clipping…</div>}
-        {error && <div className="state-msg error">{error}</div>}
-        {!loading && !error && previewTab === 'raw' && (
-          <textarea className="raw-preview" readOnly value={markdown} />
-        )}
-        {!loading && !error && previewTab === 'rendered' && (
-          <div className="rendered-preview">
-            {(() => {
-              const parsed = parseFrontMatter(markdown);
-              if (parsed) return (
-                <>
-                  <FrontMatterCard fields={parsed.fields} />
-                  <ReactMarkdown>{parsed.body}</ReactMarkdown>
-                </>
-              );
-              return <ReactMarkdown>{markdown}</ReactMarkdown>;
-            })()}
-          </div>
-        )}
-      </div>
+        <div className="flex-1 min-h-0 relative overflow-hidden">
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center text-neutral-400 text-[13px]">
+              Clipping…
+            </div>
+          )}
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center text-red-600 text-[13px] px-6 text-center">
+              {error}
+            </div>
+          )}
+          {!loading && !error && (
+            <>
+              <Tabs.Panel keepMounted value="raw" className="h-full min-h-0 overflow-hidden">
+                <textarea
+                  className="block w-full h-full border-none resize-none p-3.5 font-mono text-[11.5px] leading-relaxed bg-[#0f0f0f] text-[#c9c9c9] outline-none"
+                  readOnly
+                  value={markdown}
+                />
+              </Tabs.Panel>
+              <Tabs.Panel keepMounted value="rendered" className="rendered-preview h-full min-h-0 overflow-y-auto px-4 py-3.5 pb-7 text-[13px] leading-relaxed">
+                {(() => {
+                  const parsed = parseFrontMatter(markdown);
+                  if (parsed) return (
+                    <>
+                      <FrontMatterCard fields={parsed.fields} />
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{parsed.body}</ReactMarkdown>
+                    </>
+                  );
+                  return <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>;
+                })()}
+              </Tabs.Panel>
+            </>
+          )}
+        </div>
+      </Tabs.Root>
 
-      <div className="action-bar">
-        <button className="action-btn primary" onClick={copyToClipboard} disabled={!markdown || loading}>
+      {/* Action bar */}
+      <div className="flex gap-2 px-3 py-2.5 border-t border-neutral-200 bg-neutral-50 shrink-0">
+        <button
+          onClick={copyToClipboard}
+          disabled={!markdown || loading}
+          className="flex-1 py-1.5 text-[13px] font-medium rounded-md border border-neutral-900 bg-neutral-900 text-white cursor-pointer transition-colors
+            hover:bg-neutral-800 hover:border-neutral-800 disabled:opacity-35 disabled:cursor-not-allowed"
+        >
           {copyDone ? '✓ Copied!' : 'Copy'}
         </button>
-        <button className="action-btn" onClick={downloadFile} disabled={!markdown || loading}>
+        <button
+          onClick={downloadFile}
+          disabled={!markdown || loading}
+          className="flex-1 py-1.5 text-[13px] font-medium rounded-md border border-neutral-300 bg-white text-neutral-800 cursor-pointer transition-colors
+            hover:bg-neutral-50 disabled:opacity-35 disabled:cursor-not-allowed"
+        >
           Download .md
         </button>
       </div>

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Checkbox, Radio, RadioGroup, Switch } from '@base-ui/react';
 import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope } from '../../utils/storage';
+import './options.css';
 
 const SCOPE_OPTIONS: { value: ClipScope; label: string }[] = [
   { value: 'smart', label: 'Smart (auto-detect)' },
@@ -52,80 +54,101 @@ function Options() {
   }
 
   return (
-    <div className="options">
-      <header className="options-header">
-        <h1>📋 Clipdown Settings</h1>
-        {saved && <span className="saved-badge">✓ Saved</span>}
+    <div className="max-w-140 mx-auto px-6 py-8 text-neutral-900">
+      <header className="flex items-center gap-4 mb-8">
+        <h1 className="text-[20px] font-semibold tracking-tight m-0">Clipdown</h1>
+        {saved && (
+          <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded font-medium">
+            ✓ Saved
+          </span>
+        )}
       </header>
 
-      <section className="section">
-        <h2>Default Clip Scope</h2>
-        <p className="section-desc">What should be clipped when you open the popup?</p>
-        <div className="radio-group">
+      {/* Default Clip Scope */}
+      <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
+        <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Default Clip Scope</h2>
+        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">What should be clipped when you open the popup?</p>
+        <RadioGroup
+          value={settings.defaultScope}
+          onValueChange={(value) => setDefaultScope(value as ClipScope)}
+          className="flex flex-col gap-2"
+        >
           {SCOPE_OPTIONS.map((opt) => (
-            <label key={opt.value} className="radio-label">
-              <input
-                type="radio"
-                name="scope"
+            <label key={opt.value} className="flex items-center gap-2.5 text-[13px] cursor-pointer">
+              <Radio.Root
                 value={opt.value}
-                checked={settings.defaultScope === opt.value}
-                onChange={() => setDefaultScope(opt.value)}
-              />
-              {opt.label}
+                className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-neutral-300 bg-white shrink-0"
+              >
+                <Radio.Indicator className="w-2 h-2 rounded-full bg-neutral-900 opacity-0 data-checked:opacity-100" />
+              </Radio.Root>
+              <span>{opt.label}</span>
             </label>
           ))}
-        </div>
+        </RadioGroup>
       </section>
 
-      <section className="section">
-        <h2>Markdown Sources</h2>
-        <p className="section-desc">Prefer site-provided Markdown when available for Smart, Article, and Full Page clips.</p>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
+      {/* Markdown Sources */}
+      <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
+        <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Markdown Sources</h2>
+        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">Prefer site-provided Markdown when available for Smart, Article, and Full Page clips.</p>
+        <label className="flex items-center gap-2.5 text-[13px] font-medium cursor-pointer">
+          <Switch.Root
             checked={settings.preferSiteMarkdown}
-            onChange={(e) => setPreferSiteMarkdown(e.target.checked)}
-          />
+            onCheckedChange={setPreferSiteMarkdown}
+            className="relative inline-flex w-8.5 h-5 items-center rounded-full bg-neutral-200 shrink-0 transition-colors data-checked:bg-neutral-900"
+          >
+            <Switch.Thumb className="w-3.5 h-3.5 ml-0.75 rounded-full bg-white transition-transform data-checked:translate-x-3.5" />
+          </Switch.Root>
           Prefer site-provided Markdown
         </label>
       </section>
 
-      <section className="section">
-        <h2>Developer</h2>
-        <p className="section-desc">Logs detailed output to the browser console (content script + background).</p>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
+      {/* Developer */}
+      <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
+        <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Developer</h2>
+        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">Logs detailed output to the browser console (content script + background).</p>
+        <label className="flex items-center gap-2.5 text-[13px] font-medium cursor-pointer">
+          <Switch.Root
             checked={settings.verboseLogging}
-            onChange={(e) => setVerboseLogging(e.target.checked)}
-          />
+            onCheckedChange={setVerboseLogging}
+            className="relative inline-flex w-8.5 h-5 items-center rounded-full bg-neutral-200 shrink-0 transition-colors data-checked:bg-neutral-900"
+          >
+            <Switch.Thumb className="w-3.5 h-3.5 ml-0.75 rounded-full bg-white transition-transform data-checked:translate-x-3.5" />
+          </Switch.Root>
           Verbose logging
         </label>
       </section>
 
-      <section className="section">
-        <h2>Front Matter</h2>
-        <p className="section-desc">Prepend YAML front matter to every clipped document.</p>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
+      {/* Front Matter */}
+      <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
+        <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Front Matter</h2>
+        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">Prepend YAML front matter to every clipped document.</p>
+        <label className="flex items-center gap-2.5 text-[13px] font-medium cursor-pointer">
+          <Switch.Root
             checked={settings.frontMatterEnabled}
-            onChange={(e) => setFrontMatterEnabled(e.target.checked)}
-          />
+            onCheckedChange={setFrontMatterEnabled}
+            className="relative inline-flex w-8.5 h-5 items-center rounded-full bg-neutral-200 shrink-0 transition-colors data-checked:bg-neutral-900"
+          >
+            <Switch.Thumb className="w-3.5 h-3.5 ml-0.75 rounded-full bg-white transition-transform data-checked:translate-x-3.5" />
+          </Switch.Root>
           Enable front matter
         </label>
 
         {settings.frontMatterEnabled && (
-          <div className="fields-group">
-            <p className="fields-label">Included fields:</p>
+          <div className="mt-4 pt-4 border-t border-neutral-100">
+            <p className="text-[10.5px] text-neutral-400 uppercase tracking-widest mb-2 font-medium">Included fields</p>
             {FRONT_MATTER_FIELDS.map(({ key, label }) => (
-              <label key={key} className="checkbox-label">
-                <input
-                  type="checkbox"
+              <label key={key} className="flex items-center gap-2.5 py-1 text-[13px] cursor-pointer">
+                <Checkbox.Root
                   checked={settings.frontMatterFields[key]}
-                  onChange={(e) => setFrontMatterField(key, e.target.checked)}
-                />
-                {label}
+                  onCheckedChange={(checked) => setFrontMatterField(key, checked)}
+                  className="inline-flex items-center justify-center w-4 h-4 rounded border border-neutral-300 bg-white shrink-0 data-checked:bg-neutral-900 data-checked:border-neutral-900"
+                >
+                  <Checkbox.Indicator className="text-white text-[11px] leading-none opacity-0 data-checked:opacity-100" keepMounted>
+                    ✓
+                  </Checkbox.Indicator>
+                </Checkbox.Root>
+                <span>{label}</span>
               </label>
             ))}
           </div>

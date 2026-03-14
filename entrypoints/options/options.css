@@ -1,17 +1,10 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@import "tailwindcss";
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 15px;
-  background: #f9fafb;
-  color: #1a1a1a;
-  min-height: 100vh;
-}
-
-.options {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 32px 24px;
+@layer base {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 .options-header {
@@ -20,54 +13,148 @@ body {
   gap: 16px;
   margin-bottom: 32px;
 }
-.options-header h1 { font-size: 22px; font-weight: 700; }
-.saved-badge {
-  font-size: 13px;
-  color: #16a34a;
-  background: #dcfce7;
-  padding: 3px 10px;
-  border-radius: 20px;
+
+.options-header h1 {
+  font-size: 20px;
   font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.saved-badge {
+  font-size: 12px;
+  color: #1a6b2a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
 .section {
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 20px 22px;
-  margin-bottom: 20px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
 }
-.section h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-.section-desc { font-size: 13px; color: #6b7280; margin-bottom: 14px; }
+
+.section h2 {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin: 0 0 3px;
+  letter-spacing: -0.01em;
+}
+
+.section-desc {
+  font-size: 12px;
+  color: #909090;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
 
 .radio-group { display: flex; flex-direction: column; gap: 8px; }
-.radio-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  cursor: pointer;
-}
-.radio-label input { accent-color: #2563eb; width: 15px; height: 15px; }
 
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  font-weight: 500;
-}
-.toggle-label input { accent-color: #2563eb; width: 15px; height: 15px; }
-
-.fields-group { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e5e7eb; }
-.fields-label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.radio-label,
+.toggle-label,
 .checkbox-label {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
+}
+
+.toggle-label {
+  font-weight: 500;
+}
+
+.radio-root,
+.checkbox-root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  flex: 0 0 auto;
+}
+
+.radio-root {
+  border-radius: 50%;
+}
+
+.radio-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0a0a0a;
+  opacity: 0;
+}
+
+.radio-indicator[data-checked] {
+  opacity: 1;
+}
+
+.switch-root {
+  position: relative;
+  display: inline-flex;
+  width: 34px;
+  height: 20px;
+  align-items: center;
+  background: #e8e8e8;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  transition: background 0.15s;
+}
+
+.switch-root[data-checked] {
+  background: #0a0a0a;
+}
+
+.switch-thumb {
+  width: 14px;
+  height: 14px;
+  margin-left: 3px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+
+.switch-thumb[data-checked] {
+  transform: translateX(14px);
+}
+
+.fields-group { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e8e8e8; }
+.fields-label { font-size: 11px; color: #909090; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+
+.checkbox-label {
   padding: 3px 0;
 }
-.checkbox-label input { accent-color: #2563eb; width: 14px; height: 14px; }
+
+.checkbox-root {
+  border-radius: 3px;
+}
+
+.checkbox-root[data-checked] {
+  background: #0a0a0a;
+  border-color: #0a0a0a;
+  color: #fff;
+}
+
+.checkbox-indicator {
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0;
+}
+
+.checkbox-indicator[data-checked] {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .options {
+    padding: 24px 16px;
+  }
+}
