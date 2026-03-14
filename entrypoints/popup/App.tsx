@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { settingsItem, DEFAULT_SETTINGS, type Settings, type ClipScope } from '../../utils/storage';
+import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope, type ClipSource } from '../../utils/storage';
 import './App.css';
 
 type PreviewTab = 'raw' | 'rendered';
@@ -57,6 +57,8 @@ function App() {
   const [scope, setScope] = useState<ClipScope>('smart');
   const [markdown, setMarkdown] = useState('');
   const [title, setTitle] = useState('');
+  const [source, setSource] = useState<ClipSource>('generated-markdown');
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [previewTab, setPreviewTab] = useState<PreviewTab>('rendered');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,10 @@ function App() {
 
   // Load default scope from settings on mount
   useEffect(() => {
-    settingsItem.getValue().then((s: Settings) => setScope(s.defaultScope ?? DEFAULT_SETTINGS.defaultScope));
+    settingsItem.getValue().then((stored: Settings) => {
+      const settings = normalizeSettings(stored);
+      setScope(settings.defaultScope ?? DEFAULT_SETTINGS.defaultScope);
+    });
   }, []);
 
   const doClip = useCallback(async (s: ClipScope) => {
@@ -73,12 +78,22 @@ function App() {
     try {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) throw new Error('No active tab found');
-      const result = await browser.tabs.sendMessage(tab.id, { type: 'clip', scope: s }) as { markdown: string; title: string; error?: string } | undefined;
+      const result = await browser.tabs.sendMessage(tab.id, { type: 'clip', scope: s }) as {
+        markdown: string;
+        title: string;
+        source: ClipSource;
+        sourceUrl?: string;
+        error?: string;
+      } | undefined;
       if (!result) throw new Error('Content script not ready — reload the page and try again');
       if (result.error) throw new Error(result.error);
       setMarkdown(result.markdown);
       setTitle(result.title);
+      setSource(result.source ?? 'generated-markdown');
+      setSourceUrl(result.sourceUrl ?? null);
     } catch (e: unknown) {
+      setSource('generated-markdown');
+      setSourceUrl(null);
       setError(e instanceof Error ? e.message : 'Unknown error');
     } finally {
       setLoading(false);
@@ -124,6 +139,19 @@ function App() {
           </button>
         ))}
       </div>
+
+      {!loading && !error && markdown && (
+        <div className="source-banner">
+          <span className={`source-pill ${source === 'site-markdown' ? 'site' : 'generated'}`}>
+            {source === 'site-markdown' ? 'Site Markdown' : 'Generated Markdown'}
+          </span>
+          {source === 'site-markdown' && sourceUrl && (
+            <a className="source-link" href={sourceUrl} target="_blank" rel="noreferrer">
+              Source
+            </a>
+          )}
+        </div>
+      )}
 
       <div className="preview-tabs">
         <button className={`tab-btn${previewTab === 'rendered' ? ' active' : ''}`} onClick={() => setPreviewTab('rendered')}>Rendered</button>

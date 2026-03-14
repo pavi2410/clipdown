@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { settingsItem, DEFAULT_SETTINGS, type Settings, type ClipScope } from '../../utils/storage';
+import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope } from '../../utils/storage';
 
 const SCOPE_OPTIONS: { value: ClipScope; label: string }[] = [
   { value: 'smart', label: 'Smart (auto-detect)' },
@@ -21,7 +21,7 @@ function Options() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    settingsItem.getValue().then(setSettings);
+    settingsItem.getValue().then((stored) => setSettings(normalizeSettings(stored)));
   }, []);
 
   async function save(updated: Settings) {
@@ -41,6 +41,10 @@ function Options() {
 
   function setDefaultScope(scope: ClipScope) {
     save({ ...settings, defaultScope: scope });
+  }
+
+  function setPreferSiteMarkdown(enabled: boolean) {
+    save({ ...settings, preferSiteMarkdown: enabled });
   }
 
   function setVerboseLogging(enabled: boolean) {
@@ -71,6 +75,19 @@ function Options() {
             </label>
           ))}
         </div>
+      </section>
+
+      <section className="section">
+        <h2>Markdown Sources</h2>
+        <p className="section-desc">Prefer site-provided Markdown when available for Smart, Article, and Full Page clips.</p>
+        <label className="toggle-label">
+          <input
+            type="checkbox"
+            checked={settings.preferSiteMarkdown}
+            onChange={(e) => setPreferSiteMarkdown(e.target.checked)}
+          />
+          Prefer site-provided Markdown
+        </label>
       </section>
 
       <section className="section">
