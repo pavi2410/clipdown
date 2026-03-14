@@ -127,6 +127,47 @@ body {
   padding: 12px 16px;
   line-height: 1.65;
 }
+/* Front matter card */
+.fm-card {
+  background: #f0f4ff;
+  border: 1px solid #c7d7fc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+.fm-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+}
+.fm-key {
+  color: #4b6bbd;
+  font-weight: 600;
+  white-space: nowrap;
+  min-width: 90px;
+  flex-shrink: 0;
+  text-transform: capitalize;
+}
+.fm-value {
+  color: #374151;
+  word-break: break-word;
+  min-width: 0;
+}
+.fm-link {
+  color: #2563eb;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+.fm-link:hover { text-decoration: underline; }
+
 .rendered-preview h1 { font-size: 1.4em; margin: 0.6em 0 0.3em; }
 .rendered-preview h2 { font-size: 1.2em; margin: 0.6em 0 0.3em; }
 .rendered-preview h3 { font-size: 1.05em; margin: 0.5em 0 0.2em; }

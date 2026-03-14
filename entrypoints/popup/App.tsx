@@ -12,6 +12,47 @@ const SCOPES: { value: ClipScope; label: string }[] = [
   { value: 'selection', label: 'Selection' },
 ];
 
+function parseFrontMatter(md: string): { fields: Record<string, string>; body: string } | null {
+  if (!md.startsWith('---')) return null;
+  const end = md.indexOf('\n---', 3);
+  if (end === -1) return null;
+  const block = md.slice(4, end); // content between the fences
+  const body = md.slice(end + 4).replace(/^\n/, '');
+  const fields: Record<string, string> = {};
+  for (const line of block.split('\n')) {
+    const colon = line.indexOf(':');
+    if (colon === -1) continue;
+    const key = line.slice(0, colon).trim();
+    const value = line.slice(colon + 1).trim().replace(/^"|"$/g, '');
+    if (key) fields[key] = value;
+  }
+  return { fields, body };
+}
+
+const FIELD_ICONS: Record<string, string> = {
+  title: '📄',
+  url: '🔗',
+  date: '📅',
+  description: '💬',
+  author: '✍️',
+};
+
+function FrontMatterCard({ fields }: { fields: Record<string, string> }) {
+  return (
+    <div className="fm-card">
+      {Object.entries(fields).map(([key, value]) => (
+        <div key={key} className="fm-row">
+          <span className="fm-key">{FIELD_ICONS[key] ?? '•'} {key}</span>
+          {key === 'url'
+            ? <a className="fm-value fm-link" href={value} target="_blank" rel="noreferrer">{value}</a>
+            : <span className="fm-value">{value}</span>
+          }
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function App() {
   const [scope, setScope] = useState<ClipScope>('smart');
   const [markdown, setMarkdown] = useState('');
@@ -97,7 +138,16 @@ function App() {
         )}
         {!loading && !error && previewTab === 'rendered' && (
           <div className="rendered-preview">
-            <ReactMarkdown>{markdown}</ReactMarkdown>
+            {(() => {
+              const parsed = parseFrontMatter(markdown);
+              if (parsed) return (
+                <>
+                  <FrontMatterCard fields={parsed.fields} />
+                  <ReactMarkdown>{parsed.body}</ReactMarkdown>
+                </>
+              );
+              return <ReactMarkdown>{markdown}</ReactMarkdown>;
+            })()}
           </div>
         )}
       </div>
