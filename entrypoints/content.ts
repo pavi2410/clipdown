@@ -4,6 +4,9 @@ import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
 import { settingsItem, type ClipScope } from '../utils/storage';
 
+let verbose = false;
+const log = (...args: unknown[]) => verbose && console.log('[Clipdown]', ...args);
+
 function buildTurndown(): TurndownService {
   const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
   td.use(gfm);
@@ -40,6 +43,9 @@ interface ClipResult {
 async function clip(scope: ClipScope): Promise<ClipResult> {
   const td = buildTurndown();
   const settings = await settingsItem.getValue();
+  verbose = settings.verboseLogging;
+
+  log('clip() called', { scope, url: window.location.href });
 
   let html: string;
   let pageTitle = document.title;
@@ -48,28 +54,39 @@ async function clip(scope: ClipScope): Promise<ClipResult> {
 
   if (scope === 'selection') {
     const selHtml = selectionToHtml();
-    html = selHtml ?? document.body.innerHTML;
+    if (selHtml) {
+      log('selection: captured', selHtml.length, 'chars of HTML');
+      html = selHtml;
+    } else {
+      log('selection: nothing selected, falling back to body');
+      html = document.body.innerHTML;
+    }
   } else if (scope === 'article') {
     const art = articleToHtml();
     if (art) {
+      log('article: Readability parsed', { title: art.title, htmlLen: art.html.length });
       html = art.html;
       pageTitle = art.title || pageTitle;
       author = art.author;
       description = art.excerpt;
     } else {
+      log('article: Readability failed, falling back to body');
       html = document.body.innerHTML;
     }
   } else if (scope === 'full') {
+    log('full: using document.body', document.body.innerHTML.length, 'chars');
     html = document.body.innerHTML;
   } else {
     // smart: try article first
     const art = articleToHtml();
     if (art) {
+      log('smart: Readability succeeded', { title: art.title, htmlLen: art.html.length });
       html = art.html;
       pageTitle = art.title || pageTitle;
       author = art.author;
       description = art.excerpt;
     } else {
+      log('smart: Readability failed, falling back to full body');
       html = document.body.innerHTML;
     }
   }
@@ -88,7 +105,10 @@ async function clip(scope: ClipScope): Promise<ClipResult> {
       '';
   }
 
+  log('metadata resolved', { pageTitle, author, description: description.slice(0, 80) });
+
   let markdown = td.turndown(html);
+  log('turndown complete', markdown.length, 'chars of markdown');
 
   if (settings.frontMatterEnabled) {
     const f = settings.frontMatterFields;
@@ -102,6 +122,7 @@ async function clip(scope: ClipScope): Promise<ClipResult> {
     markdown = lines.join('\n') + '\n\n' + markdown;
   }
 
+  log('clip() done', { frontMatter: settings.frontMatterEnabled, markdownLen: markdown.length });
   return { markdown, title: pageTitle };
 }
 
@@ -110,6 +131,7 @@ export default defineContentScript({
   main() {
     browser.runtime.onMessage.addListener((message: { type: string; scope?: ClipScope }) => {
       if (message.type === 'clip') {
+        log('message received', message);
         return clip(message.scope ?? 'smart');
       }
     });

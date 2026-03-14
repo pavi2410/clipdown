@@ -14,6 +14,7 @@ export interface Settings {
   frontMatterEnabled: boolean;
   frontMatterFields: FrontMatterFields;
   defaultScope: ClipScope;
+  verboseLogging: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: Settings = {
     author: true,
   },
   defaultScope: 'smart',
+  verboseLogging: false,
 };
 
 export const settingsItem = storage.defineItem<Settings>('local:settings', {

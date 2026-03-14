@@ -43,6 +43,10 @@ function Options() {
     save({ ...settings, defaultScope: scope });
   }
 
+  function setVerboseLogging(enabled: boolean) {
+    save({ ...settings, verboseLogging: enabled });
+  }
+
   return (
     <div className="options">
       <header className="options-header">
@@ -67,6 +71,19 @@ function Options() {
             </label>
           ))}
         </div>
+      </section>
+
+      <section className="section">
+        <h2>Developer</h2>
+        <p className="section-desc">Logs detailed output to the browser console (content script + background).</p>
+        <label className="toggle-label">
+          <input
+            type="checkbox"
+            checked={settings.verboseLogging}
+            onChange={(e) => setVerboseLogging(e.target.checked)}
+          />
+          Verbose logging
+        </label>
       </section>
 
       <section className="section">

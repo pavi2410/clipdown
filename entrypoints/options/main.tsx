@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import Options from './Options';
+import Options from './Options.tsx';
 import './options.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
