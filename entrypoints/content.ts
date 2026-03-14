@@ -129,11 +129,16 @@ async function clip(scope: ClipScope): Promise<ClipResult> {
 export default defineContentScript({
   matches: ['<all_urls>'],
   main() {
-    browser.runtime.onMessage.addListener((message: { type: string; scope?: ClipScope }) => {
-      if (message.type === 'clip') {
-        log('message received', message);
-        return clip(message.scope ?? 'smart');
-      }
-    });
+    browser.runtime.onMessage.addListener(
+      (message: { type: string; scope?: ClipScope }, _sender, sendResponse) => {
+        if (message.type === 'clip') {
+          log('message received', message);
+          clip(message.scope ?? 'smart')
+            .then(sendResponse)
+            .catch((e: unknown) => sendResponse({ error: e instanceof Error ? e.message : String(e) }));
+          return true; // keep channel open for async sendResponse
+        }
+      },
+    );
   },
 });

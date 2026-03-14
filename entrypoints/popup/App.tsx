@@ -32,8 +32,9 @@ function App() {
     try {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) throw new Error('No active tab found');
-      const result = await browser.tabs.sendMessage(tab.id, { type: 'clip', scope: s }) as { markdown: string; title: string } | undefined;
-      if (!result) throw new Error('No response from content script');
+      const result = await browser.tabs.sendMessage(tab.id, { type: 'clip', scope: s }) as { markdown: string; title: string; error?: string } | undefined;
+      if (!result) throw new Error('Content script not ready — reload the page and try again');
+      if (result.error) throw new Error(result.error);
       setMarkdown(result.markdown);
       setTitle(result.title);
     } catch (e: unknown) {
