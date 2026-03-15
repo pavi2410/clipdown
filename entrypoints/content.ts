@@ -62,9 +62,10 @@ function getFallbackMetadata(): PageMetadata {
   };
 }
 
-function looksLikeHtml(text: string): boolean {
+function looksLikeMarkup(text: string): boolean {
   const sample = text.trim().slice(0, 500).toLowerCase();
-  return sample.startsWith('<!doctype html') || sample.startsWith('<html') || sample.startsWith('<body') || sample.startsWith('<head');
+  return sample.startsWith('<!doctype html') || sample.startsWith('<html') || sample.startsWith('<body') || sample.startsWith('<head')
+    || sample.startsWith('<?xml') || sample.startsWith('<feed') || sample.startsWith('<rss');
 }
 
 function looksLikeMarkdown(text: string): boolean {
@@ -72,7 +73,8 @@ function looksLikeMarkdown(text: string): boolean {
   if (/^\s*([-*+]\s+|\d+\.\s+)/m.test(text)) return true;
   if (/```[\s\S]*```/.test(text)) return true;
   if (/\[[^\]]+\]\([^\)]+\)/.test(text)) return true;
-  if (/^\s*>\s+/m.test(text)) return true;
+  // Blockquote: require `>` at line start (not inside a tag like `<tag>`)
+  if (/^>\s+/m.test(text)) return true;
   if (/^---\s*\n[\s\S]+\n---\s*(\n|$)/.test(text)) return true;
   return false;
 }
@@ -83,9 +85,11 @@ function hasFrontMatter(markdown: string): boolean {
 
 function canUseMarkdownResponse(url: string, contentType: string | null, text: string): boolean {
   const normalizedUrl = url.toLowerCase();
-  const normalizedContentType = contentType?.toLowerCase() ?? '';
-  if (!text.trim() || looksLikeHtml(text)) return false;
-  if (normalizedContentType.includes('markdown')) return true;
+  const ct = contentType?.toLowerCase() ?? '';
+  if (!text.trim() || looksLikeMarkup(text)) return false;
+  // Reject known non-markdown content types
+  if (ct.includes('xml') || ct.includes('html') || ct.includes('json') || ct.includes('atom') || ct.includes('rss')) return false;
+  if (ct.includes('markdown')) return true;
   if (normalizedUrl.endsWith('.md') || normalizedUrl.includes('.md?') || normalizedUrl.includes('.md#')) return true;
   return looksLikeMarkdown(text);
 }
@@ -95,7 +99,7 @@ function uniqueUrls(urls: string[]): string[] {
 }
 
 function getAlternateMarkdownUrls(): string[] {
-  const elements = document.querySelectorAll<HTMLLinkElement>('link[rel~="alternate"][href], link[type*="markdown"][href], link[href$=".md"]');
+  const elements = document.querySelectorAll<HTMLLinkElement>('link[type*="markdown"][href], link[href$=".md"]');
   const currentOrigin = window.location.origin;
   const urls: string[] = [];
 
