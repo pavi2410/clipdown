@@ -218,7 +218,7 @@ function App() {
             <>
               <Tabs.Panel keepMounted value="raw" className="h-full min-h-0 overflow-hidden">
                 <textarea
-                  className="block w-full h-full border-none resize-none p-3.5 font-mono text-[11.5px] leading-relaxed bg-[#0f0f0f] text-[#c9c9c9] outline-none"
+                  className="block w-full h-full border-none resize-none p-3.5 font-mono text-[11.5px] leading-relaxed bg-neutral-50 text-neutral-800 outline-none"
                   readOnly
                   value={markdown}
                 />
