@@ -57,6 +57,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copyDone, setCopyDone] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
+  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
 
   useEffect(() => {
     settingsItem.getValue().then((stored: Settings) => {
@@ -68,6 +70,7 @@ function App() {
   const doClip = useCallback(async (s: ClipScope, force = false) => {
     setLoading(true);
     setError(null);
+    const t0 = performance.now();
     try {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id || !tab.url) throw new Error('No active tab found');
@@ -89,6 +92,8 @@ function App() {
           setTitle(entry.title);
           setSource(entry.source);
           setSourceUrl(entry.sourceUrl ?? null);
+          setFromCache(true);
+          setElapsedMs(Math.round(performance.now() - t0));
           return;
         }
       }
@@ -127,6 +132,8 @@ function App() {
       setTitle(result.title);
       setSource(result.source ?? 'generated-markdown');
       setSourceUrl(result.sourceUrl ?? null);
+      setFromCache(false);
+      setElapsedMs(Math.round(performance.now() - t0));
     } catch (e: unknown) {
       setSource('generated-markdown');
       setSourceUrl(null);
@@ -221,14 +228,25 @@ function App() {
       {/* Source banner */}
       {!loading && !error && markdown && (
         <div className="flex items-center justify-between gap-2 px-3.5 py-1.5 border-b border-neutral-200 bg-neutral-50 shrink-0">
-          <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10.5px] font-mono font-medium
-            ${source === 'site-markdown'
-              ? 'bg-green-50 text-green-800 border-green-200'
-              : 'bg-neutral-100 text-neutral-500 border-neutral-200'}`}>
-            {source === 'site-markdown' ? 'site-markdown' : 'generated'}
-          </span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10.5px] font-mono font-medium shrink-0
+              ${source === 'site-markdown'
+                ? 'bg-green-50 text-green-800 border-green-200'
+                : 'bg-neutral-100 text-neutral-500 border-neutral-200'}`}>
+              {source === 'site-markdown' ? 'site-markdown' : 'generated'}
+            </span>
+            <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10.5px] font-mono font-medium shrink-0
+              ${fromCache
+                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                : 'bg-neutral-100 text-neutral-500 border-neutral-200'}`}>
+              {fromCache ? '⚡ cache' : 'live'}
+            </span>
+            {elapsedMs !== null && (
+              <span className="text-[10.5px] text-neutral-400 font-mono shrink-0">{elapsedMs}ms</span>
+            )}
+          </div>
           {source === 'site-markdown' && sourceUrl && (
-            <a className="text-[11px] text-neutral-400 hover:text-neutral-700 no-underline hover:underline" href={sourceUrl} target="_blank" rel="noreferrer">
+            <a className="text-[11px] text-neutral-400 hover:text-neutral-700 no-underline hover:underline shrink-0" href={sourceUrl} target="_blank" rel="noreferrer">
               Source ↗
             </a>
           )}
