@@ -288,6 +288,17 @@ async function clip(scope: ClipScope): Promise<ClipResult> {
   return { markdown, title: pageTitle, source, sourceUrl };
 }
 
+// Fast FNV-1a hash of a page sample — used for cache invalidation, not security.
+function pageFingerprint(): string {
+  const html = document.body.innerHTML;
+  const sample = html.slice(0, 5000) + html.slice(-1000) + html.length + document.lastModified;
+  let h = 2166136261;
+  for (let i = 0; i < sample.length; i++) {
+    h = Math.imul(h ^ sample.charCodeAt(i), 16777619) >>> 0;
+  }
+  return h.toString(36);
+}
+
 export default defineContentScript({
   registration: 'runtime',
   main() {
@@ -297,6 +308,10 @@ export default defineContentScript({
 
     browser.runtime.onMessage.addListener(
       (message: { type: string; scope?: ClipScope }, _sender, sendResponse) => {
+        if (message.type === 'fingerprint') {
+          sendResponse({ hash: pageFingerprint() });
+          return false;
+        }
         if (message.type === 'clip') {
           log('message received', message);
           clip(message.scope ?? 'smart')

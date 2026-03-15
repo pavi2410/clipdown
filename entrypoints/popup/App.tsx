@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Tabs, Toggle, ToggleGroup } from '@base-ui/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope, type ClipSource } from '../../utils/storage';
+import { settingsItem, clipCacheItem, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope, type ClipSource, type CacheEntry } from '../../utils/storage';
 import './style.css';
 
 type PreviewTab = 'raw' | 'rendered';
@@ -65,13 +65,35 @@ function App() {
     });
   }, []);
 
-  const doClip = useCallback(async (s: ClipScope) => {
+  const doClip = useCallback(async (s: ClipScope, force = false) => {
     setLoading(true);
     setError(null);
     try {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id) throw new Error('No active tab found');
+      if (!tab?.id || !tab.url) throw new Error('No active tab found');
+
+      const cacheKey = `${tab.url}:${s}`;
+
+      // Inject content script (guarded — safe to call repeatedly)
       await browser.scripting.executeScript({ target: { tabId: tab.id }, files: ['/content-scripts/content.js'] });
+
+      // Lightweight fingerprint — fast FNV-1a hash, no Readability/Turndown
+      const fpResult = await browser.tabs.sendMessage(tab.id, { type: 'fingerprint' }) as { hash: string } | undefined;
+      const currentHash = fpResult?.hash ?? '';
+
+      if (!force && currentHash) {
+        const cache = await clipCacheItem.getValue();
+        const entry = cache[cacheKey];
+        if (entry?.hash === currentHash) {
+          setMarkdown(entry.markdown);
+          setTitle(entry.title);
+          setSource(entry.source);
+          setSourceUrl(entry.sourceUrl ?? null);
+          return;
+        }
+      }
+
+      // Cache miss or forced — run full clip
       const result = await browser.tabs.sendMessage(tab.id, { type: 'clip', scope: s }) as {
         markdown: string;
         title: string;
@@ -81,6 +103,26 @@ function App() {
       } | undefined;
       if (!result) throw new Error('Content script not ready — reload the page and try again');
       if (result.error) throw new Error(result.error);
+
+      if (currentHash) {
+        const entry: CacheEntry = {
+          markdown: result.markdown,
+          title: result.title,
+          source: result.source ?? 'generated-markdown',
+          sourceUrl: result.sourceUrl,
+          hash: currentHash,
+          ts: Date.now(),
+        };
+        const cache = await clipCacheItem.getValue();
+        cache[cacheKey] = entry;
+        const allEntries = Object.entries(cache);
+        if (allEntries.length > 20) {
+          allEntries.sort(([, a], [, b]) => a.ts - b.ts);
+          delete cache[allEntries[0][0]];
+        }
+        await clipCacheItem.setValue(cache);
+      }
+
       setMarkdown(result.markdown);
       setTitle(result.title);
       setSource(result.source ?? 'generated-markdown');
@@ -126,6 +168,18 @@ function App() {
           </svg>
           Clipdown
         </span>
+        <div className="flex items-center gap-0.5">
+        <button
+          onClick={() => doClip(scope, true)}
+          disabled={loading}
+          title="Re-clip"
+          className="flex items-center justify-center w-7 h-7 rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer border-none bg-transparent disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 6.5A5.5 5.5 0 0 1 11 3.5M1 6.5V2.5M1 6.5H5"/>
+            <path d="M12 6.5A5.5 5.5 0 0 1 2 9.5M12 6.5v4M12 6.5H8"/>
+          </svg>
+        </button>
         <button
           onClick={openOptions}
           title="Settings"
@@ -136,6 +190,7 @@ function App() {
             <path d="M7.5 1.5V3M7.5 12V13.5M1.5 7.5H3M12 7.5h1.5M3.2 3.2l1.05 1.05M10.75 10.75l1.05 1.05M3.2 11.8l1.05-1.05M10.75 4.25l1.05-1.05"/>
           </svg>
         </button>
+        </div>
       </header>
 
       {/* Scope selector */}

@@ -47,3 +47,16 @@ export function normalizeSettings(settings: Partial<Settings> | null | undefined
 export const settingsItem = storage.defineItem<Settings>('local:settings', {
   defaultValue: DEFAULT_SETTINGS,
 });
+
+export interface CacheEntry {
+  markdown: string;
+  title: string;
+  source: ClipSource;
+  sourceUrl?: string;
+  hash: string;
+  ts: number;
+}
+
+export const clipCacheItem = storage.defineItem<Record<string, CacheEntry>>('local:clipCache', {
+  defaultValue: {},
+});
