@@ -1,6 +1,5 @@
 import { storage } from 'wxt/utils/storage';
 
-export type ClipScope = 'smart' | 'article' | 'full' | 'selection';
 export type ClipSource = 'generated-markdown' | 'site-markdown';
 
 export interface FrontMatterFields {
@@ -14,7 +13,6 @@ export interface FrontMatterFields {
 export interface Settings {
   frontMatterEnabled: boolean;
   frontMatterFields: FrontMatterFields;
-  defaultScope: ClipScope;
   preferSiteMarkdown: boolean;
   verboseLogging: boolean;
 }
@@ -28,7 +26,6 @@ export const DEFAULT_SETTINGS: Settings = {
     description: true,
     author: true,
   },
-  defaultScope: 'smart',
   preferSiteMarkdown: true,
   verboseLogging: false,
 };
@@ -53,6 +50,7 @@ export interface CacheEntry {
   title: string;
   source: ClipSource;
   sourceUrl?: string;
+  tokenCount?: number;
   hash: string;
   ts: number;
 }

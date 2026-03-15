@@ -1,19 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { IconClipboard, IconRefresh, IconSettings, IconCopy, IconCheck, IconDownload, IconAlertCircle } from '@tabler/icons-react';
-import { Tabs, Toggle, ToggleGroup } from '@base-ui/react';
+import { Tabs } from '@base-ui/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { settingsItem, readCacheEntry, writeCacheEntry, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope, type ClipSource, type CacheEntry } from '../../utils/storage';
+import { readCacheEntry, writeCacheEntry, type ClipSource, type CacheEntry } from '../../utils/storage';
+import { encode } from 'gpt-tokenizer';
 import './style.css';
 
 type PreviewTab = 'raw' | 'rendered';
-
-const SCOPES: { value: ClipScope; label: string }[] = [
-  { value: 'smart', label: 'Smart' },
-  { value: 'article', label: 'Article' },
-  { value: 'full', label: 'Full Page' },
-  { value: 'selection', label: 'Selection' },
-];
 
 function parseFrontMatter(md: string): { fields: Record<string, string>; body: string } | null {
   if (!md.startsWith('---')) return null;
@@ -49,7 +43,6 @@ function FrontMatterCard({ fields }: { fields: Record<string, string> }) {
 }
 
 function App() {
-  const [scope, setScope] = useState<ClipScope>('smart');
   const [markdown, setMarkdown] = useState('');
   const [title, setTitle] = useState('');
   const [source, setSource] = useState<ClipSource>('generated-markdown');
@@ -60,15 +53,9 @@ function App() {
   const [copyDone, setCopyDone] = useState(false);
   const [fromCache, setFromCache] = useState(false);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  const [tokenCount, setTokenCount] = useState(0);
 
-  useEffect(() => {
-    settingsItem.getValue().then((stored: Settings) => {
-      const settings = normalizeSettings(stored);
-      setScope(settings.defaultScope ?? DEFAULT_SETTINGS.defaultScope);
-    });
-  }, []);
-
-  const doClip = useCallback(async (s: ClipScope, force = false) => {
+  const doClip = useCallback(async (force = false) => {
     setLoading(true);
     setError(null);
     const t0 = performance.now();
@@ -76,7 +63,7 @@ function App() {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id || !tab.url) throw new Error('No active tab found');
 
-      const cacheKey = `${tab.url}:${s}`;
+      const cacheKey = `${tab.url}:page`;
 
       // Inject content script (guarded — safe to call repeatedly)
       await browser.scripting.executeScript({ target: { tabId: tab.id }, files: ['/content-scripts/content.js'] });
@@ -92,6 +79,7 @@ function App() {
           setTitle(entry.title);
           setSource(entry.source);
           setSourceUrl(entry.sourceUrl ?? null);
+          setTokenCount(entry.tokenCount ?? encode(entry.markdown).length);
           setFromCache(true);
           setElapsedMs(Math.round(performance.now() - t0));
           return;
@@ -99,7 +87,7 @@ function App() {
       }
 
       // Cache miss or forced — run full clip
-      const result = await browser.tabs.sendMessage(tab.id, { type: 'clip', scope: s }) as {
+      const result = await browser.tabs.sendMessage(tab.id, { type: 'clip', scope: 'page' }) as {
         markdown: string;
         title: string;
         source: ClipSource;
@@ -109,12 +97,15 @@ function App() {
       if (!result) throw new Error('Content script not ready — reload the page and try again');
       if (result.error) throw new Error(result.error);
 
+      const tokens = encode(result.markdown).length;
+
       if (currentHash) {
         const entry: CacheEntry = {
           markdown: result.markdown,
           title: result.title,
           source: result.source ?? 'generated-markdown',
           sourceUrl: result.sourceUrl,
+          tokenCount: tokens,
           hash: currentHash,
           ts: Date.now(),
         };
@@ -125,6 +116,7 @@ function App() {
       setTitle(result.title);
       setSource(result.source ?? 'generated-markdown');
       setSourceUrl(result.sourceUrl ?? null);
+      setTokenCount(tokens);
       setFromCache(false);
       setElapsedMs(Math.round(performance.now() - t0));
     } catch (e: unknown) {
@@ -136,7 +128,7 @@ function App() {
     }
   }, []);
 
-  useEffect(() => { doClip(scope); }, [scope]);
+  useEffect(() => { doClip(); }, []);
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(markdown);
@@ -167,7 +159,7 @@ function App() {
         </span>
         <div className="flex items-center gap-0.5">
         <button
-          onClick={() => doClip(scope, true)}
+          onClick={() => doClip(true)}
           disabled={loading}
           title="Re-clip"
           className="flex items-center justify-center w-7 h-7 rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer border-none bg-transparent disabled:opacity-40 disabled:cursor-not-allowed"
@@ -183,31 +175,6 @@ function App() {
         </button>
         </div>
       </header>
-
-      {/* Scope selector */}
-      <ToggleGroup
-        value={[scope]}
-        onValueChange={(groupValue) => {
-          const nextScope = groupValue[0] as ClipScope | undefined;
-          if (nextScope) setScope(nextScope);
-        }}
-        disabled={loading}
-        className="flex gap-1 px-3 py-2 border-b border-neutral-200 bg-neutral-50 shrink-0"
-      >
-        {SCOPES.map((s) => (
-          <Toggle
-            key={s.value}
-            value={s.value}
-            disabled={loading}
-            className="flex-1 py-1.5 px-1 text-xs font-medium rounded-md border border-transparent text-neutral-500 cursor-pointer bg-transparent transition-colors
-              hover:bg-neutral-100 hover:text-neutral-800 hover:border-neutral-200
-              data-pressed:bg-neutral-900 data-pressed:text-white data-pressed:border-neutral-900 data-pressed:font-semibold
-              disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {s.label}
-          </Toggle>
-        ))}
-      </ToggleGroup>
 
       {/* Source banner */}
       {!loading && !error && markdown && (
@@ -227,6 +194,9 @@ function App() {
             </span>
             {elapsedMs !== null && (
               <span className="text-[10.5px] text-neutral-400 font-mono shrink-0">{elapsedMs}ms</span>
+            )}
+            {tokenCount > 0 && (
+              <span className="text-[10.5px] text-neutral-400 font-mono shrink-0">~{tokenCount.toLocaleString()} tokens</span>
             )}
           </div>
           {source === 'site-markdown' && sourceUrl && (
@@ -272,7 +242,7 @@ function App() {
               <IconAlertCircle size={22} stroke={1.4} className="text-red-400 shrink-0" />
               <p className="text-red-700 text-[13px] text-center leading-snug m-0">{error}</p>
               <button
-                onClick={() => doClip(scope, true)}
+                onClick={() => doClip(true)}
                 className="text-[12px] font-medium text-neutral-600 border border-neutral-200 rounded-md px-3 py-1.5 hover:bg-neutral-50 cursor-pointer bg-white transition-colors"
               >
                 Try again

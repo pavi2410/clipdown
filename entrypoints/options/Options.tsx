@@ -1,15 +1,8 @@
 import { useState, useEffect } from 'react';
 import { IconClipboard } from '@tabler/icons-react';
-import { Checkbox, Radio, RadioGroup, Switch } from '@base-ui/react';
-import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope } from '../../utils/storage';
+import { Checkbox, Switch } from '@base-ui/react';
+import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings } from '../../utils/storage';
 import './options.css';
-
-const SCOPE_OPTIONS: { value: ClipScope; label: string }[] = [
-  { value: 'smart', label: 'Smart (auto-detect)' },
-  { value: 'article', label: 'Article' },
-  { value: 'full', label: 'Full Page' },
-  { value: 'selection', label: 'Selection' },
-];
 
 const FRONT_MATTER_FIELDS: { key: keyof Settings['frontMatterFields']; label: string }[] = [
   { key: 'title', label: 'Title' },
@@ -42,10 +35,6 @@ function Options() {
     save({ ...settings, frontMatterFields: { ...settings.frontMatterFields, [key]: value } });
   }
 
-  function setDefaultScope(scope: ClipScope) {
-    save({ ...settings, defaultScope: scope });
-  }
-
   function setPreferSiteMarkdown(enabled: boolean) {
     save({ ...settings, preferSiteMarkdown: enabled });
   }
@@ -68,33 +57,10 @@ function Options() {
         )}
       </header>
 
-      {/* Default Clip Scope */}
-      <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
-        <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Default Clip Scope</h2>
-        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">What should be clipped when you open the popup?</p>
-        <RadioGroup
-          value={settings.defaultScope}
-          onValueChange={(value) => setDefaultScope(value as ClipScope)}
-          className="flex flex-col gap-2"
-        >
-          {SCOPE_OPTIONS.map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2.5 text-[13px] cursor-pointer">
-              <Radio.Root
-                value={opt.value}
-                className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-neutral-300 bg-white shrink-0"
-              >
-                <Radio.Indicator className="w-2 h-2 rounded-full bg-neutral-900 opacity-0 data-checked:opacity-100" />
-              </Radio.Root>
-              <span>{opt.label}</span>
-            </label>
-          ))}
-        </RadioGroup>
-      </section>
-
       {/* Markdown Sources */}
       <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
         <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Markdown Sources</h2>
-        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">Prefer site-provided Markdown when available for Smart, Article, and Full Page clips.</p>
+        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">Prefer site-provided Markdown when available.</p>
         <label className="flex items-center gap-2.5 text-[13px] font-medium cursor-pointer">
           <Switch.Root
             checked={settings.preferSiteMarkdown}

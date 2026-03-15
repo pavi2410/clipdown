@@ -20,7 +20,7 @@ export default defineBackground(() => {
     });
   });
 
-  async function clipAndCopy(tabId: number, scope: 'smart' | 'selection') {
+  async function clipAndCopy(tabId: number, scope: 'page' | 'selection') {
     log('clipAndCopy', { tabId, scope });
     await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/content.js'] });
     const response = await browser.tabs.sendMessage(tabId, { type: 'clip', scope }) as { markdown: string; title: string } | undefined;
@@ -40,7 +40,7 @@ export default defineBackground(() => {
     if (!tab?.id) return;
     log('context menu clicked', info.menuItemId);
     if (info.menuItemId === 'clip-page') {
-      clipAndCopy(tab.id, 'smart');
+      clipAndCopy(tab.id, 'page');
     } else if (info.menuItemId === 'clip-selection') {
       clipAndCopy(tab.id, 'selection');
     }
@@ -52,6 +52,6 @@ export default defineBackground(() => {
     log('keyboard shortcut triggered');
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) return;
-    clipAndCopy(tab.id, 'smart');
+    clipAndCopy(tab.id, 'page');
   });
 });

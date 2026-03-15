@@ -2,7 +2,7 @@ import { Readability } from '@mozilla/readability';
 import TurndownService from 'turndown';
 // @ts-expect-error no types for this package
 import { gfm } from 'turndown-plugin-gfm';
-import { settingsItem, normalizeSettings, type ClipScope, type ClipSource } from '../utils/storage';
+import { settingsItem, normalizeSettings, type ClipSource } from '../utils/storage';
 
 let verbose = false;
 const log = (...args: unknown[]) => verbose && console.log('[Clipdown]', ...args);
@@ -201,7 +201,7 @@ interface ClipResult {
   sourceUrl?: string;
 }
 
-async function clip(scope: ClipScope): Promise<ClipResult> {
+async function clip(scope: 'page' | 'selection'): Promise<ClipResult> {
   const td = buildTurndown();
   const settings = normalizeSettings(await settingsItem.getValue());
   verbose = settings.verboseLogging;
@@ -237,31 +237,16 @@ async function clip(scope: ClipScope): Promise<ClipResult> {
         log('selection: nothing selected, falling back to body');
         html = document.body.innerHTML;
       }
-    } else if (scope === 'article') {
-      const art = articleToHtml();
-      if (art) {
-        log('article: Readability parsed', { title: art.title, htmlLen: art.html.length });
-        html = art.html;
-        pageTitle = art.title || pageTitle;
-        author = art.author || author;
-        description = art.excerpt || description;
-      } else {
-        log('article: Readability failed, falling back to body');
-        html = document.body.innerHTML;
-      }
-    } else if (scope === 'full') {
-      log('full: using document.body', document.body.innerHTML.length, 'chars');
-      html = document.body.innerHTML;
     } else {
       const art = articleToHtml();
       if (art) {
-        log('smart: Readability succeeded', { title: art.title, htmlLen: art.html.length });
+        log('page: Readability succeeded', { title: art.title, htmlLen: art.html.length });
         html = art.html;
         pageTitle = art.title || pageTitle;
         author = art.author || author;
         description = art.excerpt || description;
       } else {
-        log('smart: Readability failed, falling back to full body');
+        log('page: Readability failed, falling back to full body');
         html = document.body.innerHTML;
       }
     }
@@ -307,14 +292,14 @@ export default defineContentScript({
     (window as unknown as Record<string, unknown>)[guard] = true;
 
     browser.runtime.onMessage.addListener(
-      (message: { type: string; scope?: ClipScope }, _sender, sendResponse) => {
+      (message: { type: string; scope?: 'page' | 'selection' }, _sender, sendResponse) => {
         if (message.type === 'fingerprint') {
           sendResponse({ hash: pageFingerprint() });
           return false;
         }
         if (message.type === 'clip') {
           log('message received', message);
-          clip(message.scope ?? 'smart')
+          clip(message.scope ?? 'page')
             .then(sendResponse)
             .catch((e: unknown) => sendResponse({ error: e instanceof Error ? e.message : String(e) }));
           return true; // keep channel open for async sendResponse
