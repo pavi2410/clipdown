@@ -1,4 +1,4 @@
-import { settingsItem } from '../utils/storage';
+import { settingsItem } from '../utils/settings';
 
 const log = async (...args: unknown[]) => {
   const s = await settingsItem.getValue();

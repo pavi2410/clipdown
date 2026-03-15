@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { IconClipboard } from '@tabler/icons-react';
 import { Checkbox, Switch } from '@base-ui/react';
-import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings } from '../../utils/storage';
+import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings } from '../../utils/settings';
 import './options.css';
 
 const FRONT_MATTER_FIELDS: { key: keyof Settings['frontMatterFields']; label: string }[] = [

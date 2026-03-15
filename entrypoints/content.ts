@@ -2,7 +2,7 @@ import { Readability } from '@mozilla/readability';
 import TurndownService from 'turndown';
 // @ts-expect-error no types for this package
 import { gfm } from 'turndown-plugin-gfm';
-import { settingsItem, normalizeSettings, type ClipSource } from '../utils/storage';
+import { settingsItem, normalizeSettings, type ClipSource } from '../utils/settings';
 
 let verbose = false;
 const log = (...args: unknown[]) => verbose && console.log('[Clipdown]', ...args);
