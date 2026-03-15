@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { IconClipboard, IconRefresh, IconSettings } from '@tabler/icons-react';
+import { IconClipboard, IconRefresh, IconSettings, IconCopy, IconCheck, IconDownload, IconAlertCircle } from '@tabler/icons-react';
 import { Tabs, Toggle, ToggleGroup } from '@base-ui/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -55,7 +55,7 @@ function App() {
   const [source, setSource] = useState<ClipSource>('generated-markdown');
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
   const [previewTab, setPreviewTab] = useState<PreviewTab>('rendered');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copyDone, setCopyDone] = useState(false);
   const [fromCache, setFromCache] = useState(false);
@@ -172,7 +172,7 @@ function App() {
           title="Re-clip"
           className="flex items-center justify-center w-7 h-7 rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer border-none bg-transparent disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <IconRefresh size={15} stroke={1.4} />
+          <IconRefresh size={15} stroke={1.4} className={loading ? 'animate-spin' : ''} />
         </button>
         <button
           onClick={openOptions}
@@ -262,13 +262,21 @@ function App() {
 
         <div className="flex-1 min-h-0 relative overflow-hidden">
           {loading && (
-            <div className="absolute inset-0 flex items-center justify-center text-neutral-400 text-[13px]">
-              Clipping…
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-neutral-400">
+              <IconRefresh size={18} stroke={1.4} className="animate-spin" />
+              <span className="text-[13px]">Clipping…</span>
             </div>
           )}
           {error && (
-            <div className="absolute inset-0 flex items-center justify-center text-red-600 text-[13px] px-6 text-center">
-              {error}
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 gap-3">
+              <IconAlertCircle size={22} stroke={1.4} className="text-red-400 shrink-0" />
+              <p className="text-red-700 text-[13px] text-center leading-snug m-0">{error}</p>
+              <button
+                onClick={() => doClip(scope, true)}
+                className="text-[12px] font-medium text-neutral-600 border border-neutral-200 rounded-md px-3 py-1.5 hover:bg-neutral-50 cursor-pointer bg-white transition-colors"
+              >
+                Try again
+              </button>
             </div>
           )}
           {!loading && !error && (
@@ -305,7 +313,10 @@ function App() {
           className="flex-1 py-1.5 text-[13px] font-medium rounded-md border border-neutral-900 bg-neutral-900 text-white cursor-pointer transition-colors
             hover:bg-neutral-800 hover:border-neutral-800 disabled:opacity-35 disabled:cursor-not-allowed"
         >
-          {copyDone ? '✓ Copied!' : 'Copy'}
+          <span className="flex items-center justify-center gap-1.5">
+            {copyDone ? <IconCheck size={13} stroke={2} /> : <IconCopy size={13} stroke={1.6} />}
+            {copyDone ? 'Copied!' : 'Copy'}
+          </span>
         </button>
         <button
           onClick={downloadFile}
@@ -313,7 +324,10 @@ function App() {
           className="flex-1 py-1.5 text-[13px] font-medium rounded-md border border-neutral-300 bg-white text-neutral-800 cursor-pointer transition-colors
             hover:bg-neutral-50 disabled:opacity-35 disabled:cursor-not-allowed"
         >
-          Download .md
+          <span className="flex items-center justify-center gap-1.5">
+            <IconDownload size={13} stroke={1.6} />
+            Download .md
+          </span>
         </button>
       </div>
     </div>

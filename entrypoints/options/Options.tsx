@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { IconClipboard } from '@tabler/icons-react';
 import { Checkbox, Radio, RadioGroup, Switch } from '@base-ui/react';
 import { settingsItem, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope } from '../../utils/storage';
 import './options.css';
@@ -56,7 +57,10 @@ function Options() {
   return (
     <div className="max-w-140 mx-auto px-6 py-8 text-neutral-900">
       <header className="flex items-center gap-4 mb-8">
-        <h1 className="text-[20px] font-semibold tracking-tight m-0">Clipdown</h1>
+        <h1 className="text-[20px] font-semibold tracking-tight m-0 flex items-center gap-2.5">
+          <IconClipboard size={20} stroke={1.4} />
+          Clipdown
+        </h1>
         {saved && (
           <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded font-medium">
             ✓ Saved
@@ -103,22 +107,6 @@ function Options() {
         </label>
       </section>
 
-      {/* Developer */}
-      <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
-        <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Developer</h2>
-        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">Logs detailed output to the browser console (content script + background).</p>
-        <label className="flex items-center gap-2.5 text-[13px] font-medium cursor-pointer">
-          <Switch.Root
-            checked={settings.verboseLogging}
-            onCheckedChange={setVerboseLogging}
-            className="relative inline-flex w-8.5 h-5 items-center rounded-full bg-neutral-200 shrink-0 transition-colors data-checked:bg-neutral-900"
-          >
-            <Switch.Thumb className="w-3.5 h-3.5 ml-0.75 rounded-full bg-white transition-transform data-checked:translate-x-3.5" />
-          </Switch.Root>
-          Verbose logging
-        </label>
-      </section>
-
       {/* Front Matter */}
       <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
         <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Front Matter</h2>
@@ -153,6 +141,36 @@ function Options() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Keyboard Shortcut */}
+      <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
+        <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Keyboard Shortcut</h2>
+        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">Clip the current page to your clipboard without opening the popup.</p>
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] text-neutral-700">Clip current page</span>
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-neutral-100 border border-neutral-200 rounded text-[11px] font-mono text-neutral-600">⌘</kbd>
+            <kbd className="px-1.5 py-0.5 bg-neutral-100 border border-neutral-200 rounded text-[11px] font-mono text-neutral-600">⇧</kbd>
+            <kbd className="px-1.5 py-0.5 bg-neutral-100 border border-neutral-200 rounded text-[11px] font-mono text-neutral-600">M</kbd>
+          </span>
+        </div>
+      </section>
+
+      {/* Developer */}
+      <section className="bg-white border border-neutral-200 rounded-lg px-5 py-4 mb-3">
+        <h2 className="text-[13.5px] font-semibold tracking-tight mb-0.5">Developer</h2>
+        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">Logs detailed output to the browser console (content script + background).</p>
+        <label className="flex items-center gap-2.5 text-[13px] font-medium cursor-pointer">
+          <Switch.Root
+            checked={settings.verboseLogging}
+            onCheckedChange={setVerboseLogging}
+            className="relative inline-flex w-8.5 h-5 items-center rounded-full bg-neutral-200 shrink-0 transition-colors data-checked:bg-neutral-900"
+          >
+            <Switch.Thumb className="w-3.5 h-3.5 ml-0.75 rounded-full bg-white transition-transform data-checked:translate-x-3.5" />
+          </Switch.Root>
+          Verbose logging
+        </label>
       </section>
     </div>
   );
