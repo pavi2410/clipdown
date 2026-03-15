@@ -12,7 +12,7 @@ export default defineConfig({
   },
   manifest: {
     name: 'Clipdown',
-    description: 'Clip any webpage as Markdown',
+    description: 'Clip any webpage as clean Markdown — for Obsidian, Logseq, Notion, and pasting context into ChatGPT, Claude & Gemini.',
     permissions: ['activeTab', 'contextMenus', 'downloads', 'storage', 'scripting'],
     commands: {
       'clip-to-markdown': {

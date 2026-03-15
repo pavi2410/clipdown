@@ -11,6 +11,7 @@ A browser extension that clips any webpage as clean Markdown — with one click,
 - **Popup preview** — rendered Markdown and raw text tabs, side by side
 - **Copy & Download** — copy to clipboard or download as a named `.md` file
 - **YAML front matter** — optionally prepends title, URL, date, description, author
+- **AI-ready output** — paste clean, token-efficient Markdown directly into ChatGPT, Claude, Gemini, or any LLM chat as page context
 - **Verbose logging** — toggle detailed console output in settings for debugging
 - **Fully configurable** — settings page for front matter fields and default scope
 - **Multi-browser** — Chrome (MV3) and Firefox
@@ -51,6 +52,12 @@ bun run zip            # Package for upload
 | Copy markdown | Click **Copy** in the popup |
 | Download as file | Click **Download .md** in the popup |
 | Configure | Click ⚙️ in the popup header |
+
+## Use with AI / LLM Tools
+
+Markdown is the cleanest format to feed into AI chat interfaces. Instead of copy-pasting broken text from a webpage, Clipdown gives you structured, token-efficient Markdown — with headers, code blocks, and tables preserved — ready to paste as context into ChatGPT, Claude, Gemini, Cursor, or any other LLM tool.
+
+Typical workflow: clip a docs page or article → switch to **Raw** tab → copy → paste into your AI chat.
 
 ## Markdown Source Preference
 

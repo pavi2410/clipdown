@@ -1,8 +1,8 @@
 {
-  "name": "wxt-react-starter",
-  "description": "manifest.json description",
+  "name": "clipdown",
+  "description": "Clip any webpage as clean Markdown — for Obsidian, Logseq, Notion, and pasting context into ChatGPT, Claude & Gemini.",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
