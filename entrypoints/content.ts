@@ -289,8 +289,12 @@ async function clip(scope: ClipScope): Promise<ClipResult> {
 }
 
 export default defineContentScript({
-  matches: ['<all_urls>'],
+  registration: 'runtime',
   main() {
+    const guard = '__clipdownLoaded';
+    if ((window as unknown as Record<string, unknown>)[guard]) return;
+    (window as unknown as Record<string, unknown>)[guard] = true;
+
     browser.runtime.onMessage.addListener(
       (message: { type: string; scope?: ClipScope }, _sender, sendResponse) => {
         if (message.type === 'clip') {

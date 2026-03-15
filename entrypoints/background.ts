@@ -22,6 +22,7 @@ export default defineBackground(() => {
 
   async function clipAndCopy(tabId: number, scope: 'smart' | 'selection') {
     log('clipAndCopy', { tabId, scope });
+    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/content.js'] });
     const response = await browser.tabs.sendMessage(tabId, { type: 'clip', scope }) as { markdown: string; title: string } | undefined;
     if (!response) { log('no response from content script'); return; }
     log('clip response received', { title: response.title, markdownLen: response.markdown.length });

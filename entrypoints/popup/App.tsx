@@ -71,6 +71,7 @@ function App() {
     try {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) throw new Error('No active tab found');
+      await browser.scripting.executeScript({ target: { tabId: tab.id }, files: ['/content-scripts/content.js'] });
       const result = await browser.tabs.sendMessage(tab.id, { type: 'clip', scope: s }) as {
         markdown: string;
         title: string;
