@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { IconClipboard, IconRefresh, IconSettings } from '@tabler/icons-react';
 import { Tabs, Toggle, ToggleGroup } from '@base-ui/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -161,10 +162,7 @@ function App() {
       {/* Header */}
       <header className="flex items-center justify-between px-3.5 h-11 border-b border-neutral-200 shrink-0">
         <span className="flex items-center gap-1.5 font-semibold text-[13.5px] tracking-tight select-none">
-          <svg className="w-4 h-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="5" y="1.5" width="6" height="2.5" rx="1"/>
-            <path d="M4 2.5H3a1.5 1.5 0 0 0-1.5 1.5v9A1.5 1.5 0 0 0 3 14.5h10a1.5 1.5 0 0 0 1.5-1.5V4A1.5 1.5 0 0 0 13 2.5h-1"/>
-          </svg>
+          <IconClipboard size={16} stroke={1.4} className="shrink-0" />
           Clipdown
         </span>
         <div className="flex items-center gap-0.5">
@@ -174,20 +172,14 @@ function App() {
           title="Re-clip"
           className="flex items-center justify-center w-7 h-7 rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer border-none bg-transparent disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M1 6.5A5.5 5.5 0 0 1 11 3.5M1 6.5V2.5M1 6.5H5"/>
-            <path d="M12 6.5A5.5 5.5 0 0 1 2 9.5M12 6.5v4M12 6.5H8"/>
-          </svg>
+          <IconRefresh size={15} stroke={1.4} />
         </button>
         <button
           onClick={openOptions}
           title="Settings"
           className="flex items-center justify-center w-7 h-7 rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer border-none bg-transparent"
         >
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
-            <circle cx="7.5" cy="7.5" r="2"/>
-            <path d="M7.5 1.5V3M7.5 12V13.5M1.5 7.5H3M12 7.5h1.5M3.2 3.2l1.05 1.05M10.75 10.75l1.05 1.05M3.2 11.8l1.05-1.05M10.75 4.25l1.05-1.05"/>
-          </svg>
+          <IconSettings size={15} stroke={1.3} />
         </button>
         </div>
       </header>
