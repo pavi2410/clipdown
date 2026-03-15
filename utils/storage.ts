@@ -57,6 +57,36 @@ export interface CacheEntry {
   ts: number;
 }
 
-export const clipCacheItem = storage.defineItem<Record<string, CacheEntry>>('local:clipCache', {
+// Per-entry cache keys: local:clipCache:<encodeURIComponent(url:scope)>
+// A small index (key -> timestamp) lets eviction stay cheap without
+// reading every full entry.
+export type ClipCacheIndex = Record<string, number>;
+
+export const clipCacheIndexItem = storage.defineItem<ClipCacheIndex>('local:clipCacheIndex', {
   defaultValue: {},
 });
+
+function cacheStorageKey(cacheKey: string): `local:clipCache:${string}` {
+  return `local:clipCache:${encodeURIComponent(cacheKey)}`;
+}
+
+export async function readCacheEntry(cacheKey: string): Promise<CacheEntry | null> {
+  return storage.getItem<CacheEntry>(cacheStorageKey(cacheKey));
+}
+
+export async function writeCacheEntry(cacheKey: string, entry: CacheEntry): Promise<void> {
+  await storage.setItem(cacheStorageKey(cacheKey), entry);
+
+  const index = await clipCacheIndexItem.getValue();
+  index[cacheKey] = entry.ts;
+
+  const entries = Object.entries(index);
+  if (entries.length > 20) {
+    entries.sort(([, a], [, b]) => a - b);
+    const [oldestKey] = entries[0];
+    delete index[oldestKey];
+    await storage.removeItem(cacheStorageKey(oldestKey));
+  }
+
+  await clipCacheIndexItem.setValue(index);
+}

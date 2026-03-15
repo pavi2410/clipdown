@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Tabs, Toggle, ToggleGroup } from '@base-ui/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { settingsItem, clipCacheItem, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope, type ClipSource, type CacheEntry } from '../../utils/storage';
+import { settingsItem, readCacheEntry, writeCacheEntry, DEFAULT_SETTINGS, normalizeSettings, type Settings, type ClipScope, type ClipSource, type CacheEntry } from '../../utils/storage';
 import './style.css';
 
 type PreviewTab = 'raw' | 'rendered';
@@ -85,8 +85,7 @@ function App() {
       const currentHash = fpResult?.hash ?? '';
 
       if (!force && currentHash) {
-        const cache = await clipCacheItem.getValue();
-        const entry = cache[cacheKey];
+        const entry = await readCacheEntry(cacheKey);
         if (entry?.hash === currentHash) {
           setMarkdown(entry.markdown);
           setTitle(entry.title);
@@ -118,14 +117,7 @@ function App() {
           hash: currentHash,
           ts: Date.now(),
         };
-        const cache = await clipCacheItem.getValue();
-        cache[cacheKey] = entry;
-        const allEntries = Object.entries(cache);
-        if (allEntries.length > 20) {
-          allEntries.sort(([, a], [, b]) => a.ts - b.ts);
-          delete cache[allEntries[0][0]];
-        }
-        await clipCacheItem.setValue(cache);
+        await writeCacheEntry(cacheKey, entry);
       }
 
       setMarkdown(result.markdown);
