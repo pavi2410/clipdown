@@ -6,7 +6,10 @@ export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
-  modules: ['@wxt-dev/module-react'],
+  modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
+  autoIcons: {
+    baseIconPath: 'assets/icon.svg',
+  },
   manifest: {
     name: 'Clipdown',
     description: 'Clip any webpage as Markdown',
